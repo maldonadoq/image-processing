@@ -11,6 +11,7 @@ def steganography_decode(input_image, bit_plane):
 
     # Broadcast to array nx8 Dim
     output_bits = input_bits.reshape((-1, 8))
+    # Sum axis=1 to get ascii value
     output_bytes = np.sum(output_bits * [128, 64, 32, 16, 8, 4, 2, 1], axis=1)
 
     output_text = ''
@@ -41,3 +42,6 @@ def main():
 
 if __name__ == "__main__":
     main()
+
+# Example to tun program
+# python3 decode.py images/baboon_enc.png data/small_dec.txt 0

@@ -37,7 +37,7 @@ def main():
     parser.add_argument('in_image', help='Name of the input image.')
     parser.add_argument('in_text', help='Name of the input text.')
     parser.add_argument('out_image', help='Name of the encoded image.')
-    parser.add_argument('bit_plane', help='Bit plane to hide msg.', type=int)
+    parser.add_argument('bit_plane', help='Bit plane to hide [0, 7]', type=int)
     args = parser.parse_args()
 
     # Read input image file
@@ -55,3 +55,6 @@ def main():
 
 if __name__ == "__main__":
     main()
+
+# Example to tun program
+# python3 encode.py images/baboon.png data/small.txt images/baboon_enc.png 0
