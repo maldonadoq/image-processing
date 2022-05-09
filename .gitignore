@@ -134,6 +134,8 @@ dmypy.json
 # Files
 *_enc.*
 *_dec.*
+*_bgr.*
+*_hsv.*
 *_gray.*
 *_color.*
 
