@@ -1,4 +1,3 @@
-from distutils import errors
 import numpy as np
 import cv2 as cv
 import argparse
@@ -82,13 +81,24 @@ def stipple(img, error, zigzag):
     return out
 
 
-def halftones(file, error, color=False, zigzag=False):
-    if color:
+def halftones(file, error, channel='gray', zigzag=False):
+    if channel == 'bgr':
         inp_img = cv.imread(file, cv.IMREAD_COLOR)
         out_img = np.zeros(inp_img.shape)
-        # halftones in each field color
-        for i in range(inp_img.shape[2]):
+        
+        # halftones in each channel color [bgr]
+        for i in [0, 1, 2]:
             out_img[:, :, i] = stipple(inp_img[:, :, i], error, zigzag)
+    elif channel == 'hsv':
+        inp_img = cv.imread(file, cv.IMREAD_COLOR)
+        inp_img = cv.cvtColor(inp_img, cv.COLOR_BGR2HSV)
+
+        out_img = np.copy(inp_img)
+        # halftones in each channel color [v]
+        for i in [2]:
+            out_img[:, :, i] = stipple(inp_img[:, :, i], error, zigzag)
+
+        out_img = cv.cvtColor(out_img, cv.COLOR_HSV2BGR)
     else:
         inp_img = cv.imread(file, cv.IMREAD_GRAYSCALE)
         out_img = stipple(inp_img, error, zigzag)
@@ -103,20 +113,19 @@ def main():
     parser.add_argument(
         'in_distr', help='Name of error distribution: (floyd, stevenson, burkes, sierra, stucki, jarvis, all).')
     parser.add_argument(
-        '--zigzag', help='Use zigzag alternating.', action='store_true')
+        'channel', help='Channel color of the image: (gbr, hsv, gray).')
     parser.add_argument(
-        '--color', help='Use color images or grayscale.', action='store_true')
+        '--zigzag', help='Use zigzag alternating.', action='store_true')
     args = parser.parse_args()
 
     errors = get_errors(args.in_distr)
     for error in errors:
         _, out_img = halftones(args.in_image, errors[error],
-                               args.color, args.zigzag)
+                               args.channel, args.zigzag)
 
-        out_name = '_{}_{}_{}.'.format(error,
-                                       'zigzag' if args.zigzag else 'line',
-                                       'color' if args.color else 'gray'
-                                       )
+        out_name = '_{}_{}_{}.'.format(
+            error, 'zigzag' if args.zigzag else 'line', args.channel
+        )
         out_image = out_name.join(args.in_image.rsplit('.'))
         cv.imwrite(out_image, out_img)
         print('{} saved: {}'.format(args.in_image, error))
@@ -126,4 +135,4 @@ if __name__ == "__main__":
     main()
 
 # Example to tun program
-# python3 halftones.py images/baboon.png floyd
+# python3 halftones.py images/baboon.png floyd bgr
