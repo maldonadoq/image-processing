@@ -73,8 +73,6 @@ def stipple(img, error, zigzag):
 
         for x in range(eX, dX)[::-1 if reverse else 1]:
             out[y, x] = 0 if img[y, x] < 128 else 255
-            #img[y, x] = max(0, img[y, x])
-            #out[y, x] = 255 * np.floor(img[y, x]/128)
 
             diff = img[y, x] - out[y, x]
             slice = img[y:y+eY+1, x-eX:x+eX+1]
@@ -128,4 +126,4 @@ if __name__ == "__main__":
     main()
 
 # Example to tun program
-# python3 halftones.py images/baboon.png all
+# python3 halftones.py images/baboon.png floyd
