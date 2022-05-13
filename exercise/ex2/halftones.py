@@ -35,13 +35,15 @@ filters = {
 
 
 def get_errors(error_name):
+    # if its all, return all distribution errors
     if error_name == 'all':
         return filters
     else:
+        # return error if exist
         return dict({error_name: filters[error_name]}) if error_name in filters else dict()
 
 
-def stipple(img, error, zigzag):
+def dithering(img, error, zigzag):
     # error distribution size
     eX = error.shape[1] // 2
     eY = error.shape[0] - 1
@@ -70,13 +72,17 @@ def stipple(img, error, zigzag):
         reverse = (y % 2 == 1) if zigzag else False
         error_curr = error_rev if reverse else error
 
+        # reverse range using ::-1
         for x in range(eX, dX)[::-1 if reverse else 1]:
+            # thresholding
             out[y, x] = 0 if img[y, x] < 128 else 255
 
             diff = img[y, x] - out[y, x]
             slice = img[y:y+eY+1, x-eX:x+eX+1]
+            # accumulate errors
             slice += (error_curr * diff)
 
+    # remove border added
     out = out[:dY, eX:dX]
     return out
 
@@ -88,7 +94,7 @@ def halftones(file, error, channel='gray', zigzag=False):
         
         # halftones in each channel color [bgr]
         for i in [0, 1, 2]:
-            out_img[:, :, i] = stipple(inp_img[:, :, i], error, zigzag)
+            out_img[:, :, i] = dithering(inp_img[:, :, i], error, zigzag)
     elif channel == 'hsv':
         inp_img = cv.imread(file, cv.IMREAD_COLOR)
         inp_img = cv.cvtColor(inp_img, cv.COLOR_BGR2HSV)
@@ -96,12 +102,12 @@ def halftones(file, error, channel='gray', zigzag=False):
         out_img = np.copy(inp_img)
         # halftones in each channel color [v]
         for i in [2]:
-            out_img[:, :, i] = stipple(inp_img[:, :, i], error, zigzag)
+            out_img[:, :, i] = dithering(inp_img[:, :, i], error, zigzag)
 
         out_img = cv.cvtColor(out_img, cv.COLOR_HSV2BGR)
     else:
         inp_img = cv.imread(file, cv.IMREAD_GRAYSCALE)
-        out_img = stipple(inp_img, error, zigzag)
+        out_img = dithering(inp_img, error, zigzag)
 
     return inp_img, out_img
 
