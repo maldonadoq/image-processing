@@ -138,4 +138,5 @@ dmypy.json
 *_hsv.*
 *_gray.*
 *_color.*
-
+*.mpg
+*.mp4
