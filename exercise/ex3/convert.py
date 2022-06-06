@@ -5,12 +5,10 @@ import os
 def to_grayscale(input_name, output_name):
     cap = cv.VideoCapture(input_name)
 
-    print(cv.CAP_PROP_FRAME_WIDTH)
-    print(cv.CAP_PROP_FRAME_HEIGHT)
     width = int(cap.get(cv.CAP_PROP_FRAME_WIDTH))
     height = int(cap.get(cv.CAP_PROP_FRAME_HEIGHT))
 
-    fourcc = cv.VideoWriter_fourcc(*'DIVX')
+    fourcc = cv.VideoWriter_fourcc(*'XVID')
     out = cv.VideoWriter(output_name, fourcc, 20.0,
                          (width, height), isColor=False)
 
@@ -31,7 +29,7 @@ def bgr_to_grayscale(input_path='./videos/color', output_path='./videos/gray'):
     for i in range(len(files)):
         input_name = '{}/{}'.format(input_path, files[i])
         output_name = '{}/{}'.format(output_path,
-                                     files[i].rsplit('.')[0] + '.mp4')
+                                     files[i].rsplit('.')[0] + '.avi')
         print(input_name, output_name)
         to_grayscale(input_name, output_name)
 
