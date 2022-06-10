@@ -4,7 +4,6 @@ import numpy as np
 
 def save_metrics(file, output, metrics):
     cap = cv.VideoCapture(file)
-    print(file, output)
 
     width = int(cap.get(cv.CAP_PROP_FRAME_WIDTH))
     height = int(cap.get(cv.CAP_PROP_FRAME_HEIGHT))

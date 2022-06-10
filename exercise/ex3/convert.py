@@ -1,4 +1,5 @@
 import cv2 as cv
+import argparse
 import os
 
 
@@ -23,19 +24,40 @@ def to_grayscale(input_name, output_name):
             break
 
 
-def bgr_to_grayscale(input_path='./videos/color', output_path='./videos/gray'):
-    files = os.listdir(input_path)
-
+def bgr_to_grayscale(files, output_path='./videos/gray'):
     for i in range(len(files)):
-        input_name = '{}/{}'.format(input_path, files[i])
         output_name = '{}/{}'.format(output_path,
-                                     files[i].rsplit('.')[0] + '.avi')
-        print(input_name, output_name)
-        to_grayscale(input_name, output_name)
+                                     files[i].split('/')[-1].rsplit('.', 1)[0] + '.avi')
+        to_grayscale(files[i], output_name)
+        print(files[i], output_name)
 
 
 def main():
-    bgr_to_grayscale()
+    path_color = './videos/color'
+    path_gray = './videos/gray'
+    path_out = './videos/out'
+
+    if not os.path.exists(path_color):
+        os.makedirs(path_color)
+    if not os.path.exists(path_gray):
+        os.makedirs(path_gray)
+    if not os.path.exists(path_out):
+        os.makedirs(path_out)
+
+    parser = argparse.ArgumentParser(
+        description='Convert videos to grayscale.')
+    parser.add_argument(
+        'video', help='Name of the input video: videos/news.mpg')
+
+    args = parser.parse_args()
+
+    if args.video == 'all':
+        files = os.listdir('./videos/color')
+        files = ['{}/{}'.format(path_color, files[i])
+                 for i in range(len(files))]
+        bgr_to_grayscale(files)
+    else:
+        bgr_to_grayscale([args.video])
 
 
 if __name__ == "__main__":
