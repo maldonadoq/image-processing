@@ -141,3 +141,7 @@ dmypy.json
 *.mpg
 *.mp4
 *.avi
+*_pixels.*
+*_blocks.*
+*_histograms.*
+*_edges.*
