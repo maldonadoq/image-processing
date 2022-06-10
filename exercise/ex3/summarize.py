@@ -82,7 +82,6 @@ def save_metrics(metrics, peaks, output):
 
     plt.figure(figsize=(25, 10))
     index = peaks.nonzero()[0]
-    print('{} summarized'.format((index.shape[0] / metrics.shape[0]) * 100))
     plt.plot(X[index], metrics[index], "o", label="peaks")
     plt.plot(X, metrics, label="metrics")
     plt.legend()
@@ -111,6 +110,8 @@ def main():
     video_out = '{}/{}_{}'.format(args.out, video_name, args.difference)
 
     metrics, peaks = process(video_gray, 64, args.difference)
+    print('file: {} - {}, summarized: {}'.format(args.video,
+          args.difference, peaks.sum() / metrics.shape[0]))
 
     save_metrics(metrics, peaks, video_out + '.png')
     save_summarize(peaks, args.video, video_out + '.avi')

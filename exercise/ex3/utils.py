@@ -61,6 +61,11 @@ def get_metrics(file, shots_size, difference, params, dtype='uint8'):
             break
 
     metrics = np.array(metrics)
+
+    """ ordered = np.sort(metrics)
+    init = int(metrics.shape[0] * 0.8)
+    return metrics, metrics > ordered[init] """
+
     peaks = np.zeros(metrics.shape, dtype=bool)
     peaks[1:-1] = np.diff(np.sign(np.diff(metrics))) < 0
     return metrics, peaks
