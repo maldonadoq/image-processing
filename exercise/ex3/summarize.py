@@ -7,24 +7,34 @@ import time
 
 
 def diff_pixels(frames, params):
+    # diff between two consecutive frames in a shot
     difference = np.abs(frames[1:] - frames[:-1])
-    metrics = list(np.sum(difference > params[0], axis=(1, 2)))
 
-    return metrics
+    # number of pixels greater than a threshold
+    metrics = np.sum(difference > params[0], axis=(1, 2))
+
+    return list(metrics)
 
 
 def diff_blocks(frames, params):
+    # parmas[0] is block size
     rows, cols = frames.shape[1], frames.shape[2]
 
+    # trows is number os blocks
     trows = rows // params[0]
     tcols = cols // params[0]
 
+    # use new frame dimensions
+    # diff between two consecutive frames
+    # squared difference
     frames = frames[:, :trows * params[0], :tcols * params[0]]
     difference = np.abs(frames[1:] - frames[:-1])
     difference = difference * difference
 
     metrics = []
     for diff in difference:
+        # vectorized sum blocks
+        # vectorized sqrt soma
         soma = np.sum(utils.reshape(
             diff, trows, tcols, params[0]), axis=(1, 2))
         metrics.append((np.sqrt(soma) > params[1]).sum())
@@ -33,12 +43,16 @@ def diff_blocks(frames, params):
 
 def diff_histogram(frames, params):
     total = frames.shape[0]
+    # array of histograms
     histograms = np.empty((total, 256))
 
+    # numpy histograms
     for i in range(total):
         hist, _ = np.histogram(frames[i], bins=256, range=(0, 255))
         histograms[i] = hist
 
+    # diff between two consecutive frames
+    # T = mean + 3*std
     difference = np.abs(histograms[1:] - histograms[:-1])
     means = np.mean(difference, axis=1)
     stds = np.std(difference, axis=1)
@@ -50,6 +64,8 @@ def diff_histogram(frames, params):
 def diff_edges(frames, params):
     metrics = []
     for frame in frames:
+        # apply sobel filter and count pixels
+        # sobel filter is vectorized as addition
         mask = utils.normalize(utils.sobel(frame))
         metrics.append((mask > params[0]).sum())
     return metrics
@@ -57,6 +73,7 @@ def diff_edges(frames, params):
 
 def process(filename, shot_size, diff):
     metrics = None
+    # summarize video using specific difference
     if diff == 'pixels':
         metrics = utils.get_metrics(
             filename, shot_size, diff_pixels, [128], 'int16')
@@ -83,7 +100,7 @@ def save_metrics(metrics, peaks, output):
     plt.plot(X[index], metrics[index], "o", label="peaks")
     plt.plot(X, metrics, label="metrics")
     plt.legend()
-    plt.savefig(output)
+    plt.savefig(output, bbox_inches='tight')
 
 
 def save_summarize(metrics, filename, output):

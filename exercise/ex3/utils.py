@@ -2,6 +2,7 @@ import cv2 as cv
 import numpy as np
 
 
+# save video summarized
 def save_metrics(file, output, peaks):
     cap = cv.VideoCapture(file)
 
@@ -24,6 +25,7 @@ def save_metrics(file, output, peaks):
         count += 1
 
 
+# process gray video in shots
 def get_metrics(file, shots_size, difference, params, dtype='uint8'):
     cap = cv.VideoCapture(file)
 
@@ -66,11 +68,17 @@ def get_metrics(file, shots_size, difference, params, dtype='uint8'):
     init = int(metrics.shape[0] * 0.8)
     return metrics, metrics > ordered[init] """
 
+    # locals maxima vectorized
     peaks = np.zeros(metrics.shape, dtype=bool)
     peaks[1:-1] = np.diff(np.sign(np.diff(metrics))) < 0
-    return metrics, peaks
+
+    # middle locals maxima
+    index = np.sort(metrics[peaks.nonzero()[0]])
+    middle = metrics > index[index.shape[0] // 2]
+    return metrics, peaks & middle
 
 
+# frame 2D into array of blocks
 def reshape(image, rows, cols, size):
     rows, cols = image.shape
 
@@ -79,6 +87,7 @@ def reshape(image, rows, cols, size):
     return tiled_array
 
 
+# normaliza frame 2D
 def normalize(img_in):
     img_out = np.zeros(img_in.shape, dtype="uint8")
 
@@ -90,12 +99,14 @@ def normalize(img_in):
     return img_out
 
 
+# sobel filter X
 def sobelX(img_in):
     res_h = img_in[:, 2:] - img_in[:, :-2]
     res_v = res_h[:-2] + res_h[2:] + 2*res_h[1:-1]
     return np.abs(res_v)
 
 
+# sobel filter Y
 def sobelY(img_in):
     img = img_in.transpose()
     res_h = img[:, 2:] - img[:, :-2]
@@ -103,6 +114,7 @@ def sobelY(img_in):
     return np.abs(res_v.transpose())
 
 
+# sobel filter in frame 2D
 def sobel(img):
     img = img.astype('int16')
     out = np.zeros(img.shape, int)
