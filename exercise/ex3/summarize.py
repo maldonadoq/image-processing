@@ -1,4 +1,6 @@
 
+from cProfile import label
+from cv2 import threshold
 from matplotlib import pyplot as plt
 
 import numpy as np
@@ -75,11 +77,15 @@ def process(filename, shot_size, diff):
     return metrics
 
 
-def save_metrics(metrics, output):
-    X = range(len(metrics))
+def save_metrics(metrics, peaks, output):
+    X = np.array(range(len(metrics)))
 
     plt.figure(figsize=(25, 10))
-    plt.plot(X, metrics)
+    index = peaks.nonzero()[0]
+    print('{} summarized'.format((index.shape[0] / metrics.shape[0]) * 100))
+    plt.plot(X[index], metrics[index], "o", label="peaks")
+    plt.plot(X, metrics, label="metrics")
+    plt.legend()
     plt.savefig(output)
 
 
@@ -94,15 +100,20 @@ def main():
     parser.add_argument(
         'difference', help='Name of difference: (pixels, blocks, histograms, edges.')
     parser.add_argument(
-        '--folder', help='Folder to save summarized video.', default='./videos')
+        '--gray', help='Folder to save summarized video.', default='./videos/gray')
+    parser.add_argument(
+        '--out', help='Folder to save summarized video.', default='./videos/out')
 
     args = parser.parse_args()
 
-    metrics = process(args.video, 64, args.difference)
-    path = '{}_{}'.format(args.video.rsplit('.', 1)[0], args.difference)
+    video_name = args.video.split('/')[-1].rsplit('.', 1)[0]
+    video_gray = '{}/{}.avi'.format(args.gray, video_name)
+    video_out = '{}/{}_{}'.format(args.out, video_name, args.difference)
 
-    save_metrics(metrics, path + '.png')
-    save_summarize(metrics, args.video, path + '.avi')
+    metrics, peaks = process(video_gray, 64, args.difference)
+
+    save_metrics(metrics, peaks, video_out + '.png')
+    save_summarize(peaks, args.video, video_out + '.avi')
 
 
 if __name__ == "__main__":

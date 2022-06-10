@@ -2,7 +2,7 @@ import cv2 as cv
 import numpy as np
 
 
-def save_metrics(file, output, metrics):
+def save_metrics(file, output, peaks):
     cap = cv.VideoCapture(file)
 
     width = int(cap.get(cv.CAP_PROP_FRAME_WIDTH))
@@ -15,7 +15,7 @@ def save_metrics(file, output, metrics):
     while(cap.isOpened()):
         ret, frame = cap.read()
         if ret:
-            if count < len(metrics) and metrics[count]:
+            if count < len(peaks) and peaks[count]:
                 out.write(frame)
         else:
             cap.release()
@@ -34,13 +34,13 @@ def get_metrics(file, shots_size, difference, params, dtype='uint8'):
     metrics = []
 
     ret, frame = cap.read()
-    first_frame = cv.cvtColor(frame, cv.COLOR_BGR2GRAY)
+    first_frame = frame[:, :, 0]
     count = 1
 
     while(cap.isOpened()):
         ret, frame = cap.read()
         if ret:
-            gray_frame = cv.cvtColor(frame, cv.COLOR_BGR2GRAY)
+            gray_frame = frame[:, :, 0]
             if count > shots_size:
                 shots[0] = first_frame
                 first_frame = shots[-1].copy()
@@ -60,7 +60,10 @@ def get_metrics(file, shots_size, difference, params, dtype='uint8'):
             cap.release()
             break
 
-    return np.array(metrics)
+    metrics = np.array(metrics)
+    peaks = np.zeros(metrics.shape, dtype=bool)
+    peaks[1:-1] = np.diff(np.sign(np.diff(metrics))) < 0
+    return metrics, peaks
 
 
 def reshape(image, rows, cols, size):
