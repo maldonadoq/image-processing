@@ -1,11 +1,9 @@
-
-from cProfile import label
-from cv2 import threshold
 from matplotlib import pyplot as plt
 
 import numpy as np
 import argparse
 import utils
+import time
 
 
 def diff_pixels(frames, params):
@@ -109,9 +107,11 @@ def main():
     video_gray = '{}/{}.avi'.format(args.gray, video_name)
     video_out = '{}/{}_{}'.format(args.out, video_name, args.difference)
 
+    start = time.time()
     metrics, peaks = process(video_gray, 64, args.difference)
-    print('file: {} - {}, summarized: {}'.format(args.video,
-          args.difference, peaks.sum() / metrics.shape[0]))
+    end = time.time()
+    print('{} - {}, summarized: {}, time: {}'.format(video_name,
+          args.difference, peaks.sum() / metrics.shape[0], end - start))
 
     save_metrics(metrics, peaks, video_out + '.png')
     save_summarize(peaks, args.video, video_out + '.avi')
