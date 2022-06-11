@@ -25,8 +25,24 @@ def save_metrics(file, output, peaks):
         count += 1
 
 
+# get all peaks
+def threshold(metrics):
+    """ ordered = np.sort(metrics)
+    init = int(metrics.shape[0] * 0.8)
+    return metrics, metrics > ordered[init] """
+
+    # locals maxima vectorized
+    peaks = np.zeros(metrics.shape, dtype=bool)
+    peaks[1:-1] = np.diff(np.sign(np.diff(metrics))) < 0
+
+    # middle locals maxima
+    index = np.sort(metrics[peaks.nonzero()[0]])
+    middle = metrics > index[index.shape[0] // 2]
+    return peaks & middle
+
+
 # process gray video in shots
-def get_metrics(file, shots_size, difference, params, dtype='uint8'):
+def get_metrics_gray(file, shots_size, difference, params, dtype='uint8'):
     cap = cv.VideoCapture(file)
 
     cols = int(cap.get(cv.CAP_PROP_FRAME_WIDTH))
@@ -63,19 +79,48 @@ def get_metrics(file, shots_size, difference, params, dtype='uint8'):
             break
 
     metrics = np.array(metrics)
+    return metrics, threshold(metrics)
 
-    """ ordered = np.sort(metrics)
-    init = int(metrics.shape[0] * 0.8)
-    return metrics, metrics > ordered[init] """
 
-    # locals maxima vectorized
-    peaks = np.zeros(metrics.shape, dtype=bool)
-    peaks[1:-1] = np.diff(np.sign(np.diff(metrics))) < 0
+# process color video in shots
+def get_metrics_color(file, shots_size, difference, params, dtype='uint8'):
+    cap = cv.VideoCapture(file)
 
-    # middle locals maxima
-    index = np.sort(metrics[peaks.nonzero()[0]])
-    middle = metrics > index[index.shape[0] // 2]
-    return metrics, peaks & middle
+    cols = int(cap.get(cv.CAP_PROP_FRAME_WIDTH))
+    rows = int(cap.get(cv.CAP_PROP_FRAME_HEIGHT))
+
+    shots = np.empty((shots_size + 1, rows, cols), dtype)
+    metrics = []
+
+    ret, frame = cap.read()
+    first_frame = cv.cvtColor(frame, cv.COLOR_BGR2GRAY)
+    count = 1
+
+    while(cap.isOpened()):
+        ret, frame = cap.read()
+        if ret:
+            gray_frame = cv.cvtColor(frame, cv.COLOR_BGR2GRAY)
+            if count > shots_size:
+                shots[0] = first_frame
+                first_frame = shots[-1].copy()
+
+                # process shots
+                metrics += difference(shots, params)
+
+                shots[1] = gray_frame
+                count = 2
+            else:
+                shots[count] = gray_frame
+                count += 1
+        else:
+            # process shots[:count,:,:]
+            shots[0] = first_frame
+            metrics += difference(shots[:count, :, :], params)
+            cap.release()
+            break
+
+    metrics = np.array(metrics)
+    return metrics, threshold(metrics)
 
 
 # frame 2D into array of blocks

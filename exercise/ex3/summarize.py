@@ -4,6 +4,7 @@ import numpy as np
 import argparse
 import utils
 import time
+import os
 
 
 def diff_pixels(frames, params):
@@ -71,21 +72,24 @@ def diff_edges(frames, params):
     return metrics
 
 
-def process(filename, shot_size, diff):
+def process(color_video, gray_video, shot_size, diff):
+    filename = gray_video
+    get_metrics = utils.get_metrics_gray
+    if not os.path.exists(gray_video):
+        filename = color_video
+        get_metrics = utils.get_metrics_color
+
     metrics = None
     # summarize video using specific difference
     if diff == 'pixels':
-        metrics = utils.get_metrics(
-            filename, shot_size, diff_pixels, [128], 'int16')
+        metrics = get_metrics(filename, shot_size, diff_pixels, [128], 'int16')
     elif diff == 'blocks':
-        metrics = utils.get_metrics(
-            filename, shot_size, diff_blocks, [8, 128], 'int32')
+        metrics = get_metrics(filename, shot_size,
+                              diff_blocks, [8, 128], 'int32')
     elif diff == 'histograms':
-        metrics = utils.get_metrics(
-            filename, shot_size, diff_histogram, [])
+        metrics = get_metrics(filename, shot_size, diff_histogram, [])
     elif diff == 'edges':
-        metrics = utils.get_metrics(
-            filename, shot_size, diff_edges, [128])
+        metrics = get_metrics(filename, shot_size, diff_edges, [128])
     else:
         raise NameError("'{}' > not defined".format(diff))
 
@@ -114,9 +118,9 @@ def main():
     parser.add_argument(
         'difference', help='Name of difference: (pixels, blocks, histograms, edges.')
     parser.add_argument(
-        '--gray', help='Folder to save summarized video.', default='./videos/gray')
+        '--gray', help='Folder to save summarized video. (./videos/gray)', default='./videos/gray')
     parser.add_argument(
-        '--out', help='Folder to save summarized video.', default='./videos/out')
+        '--out', help='Folder to save summarized video. (./videos/out)', default='./videos/out')
 
     args = parser.parse_args()
 
@@ -125,7 +129,7 @@ def main():
     video_out = '{}/{}_{}'.format(args.out, video_name, args.difference)
 
     start = time.time()
-    metrics, peaks = process(video_gray, 64, args.difference)
+    metrics, peaks = process(args.video, video_gray, 64, args.difference)
     end = time.time()
     print('{} - {}, summarized: {}, time: {}'.format(video_name,
           args.difference, peaks.sum() / metrics.shape[0], end - start))
@@ -136,3 +140,5 @@ def main():
 
 if __name__ == "__main__":
     main()
+
+# python3 summarize.py ./videos/color/news.mpg edges
