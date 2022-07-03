@@ -145,6 +145,10 @@ dmypy.json
 *_blocks.*
 *_histograms.*
 *_edges.*
+*_nearest.*
+*_bilinear.*
+*_bicubic.*
+*_lagrange.*
 
 # Cpp
 *.out
