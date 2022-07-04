@@ -206,7 +206,7 @@ def main():
     parser.add_argument(
         '-r', '--reflection', dest='reflection', type=str, help='Reflection axis (1,-1)')
     parser.add_argument(
-        '-k', '--', dest='shear', type=str, help='Shear values')
+        '-k', '--shear', dest='shear', type=str, help='Shear values')
     parser.add_argument(
         '-d', '--dimension', dest='dim', type=str, help='Output image dimension in pixels: (N,M)')
     parser.add_argument(
