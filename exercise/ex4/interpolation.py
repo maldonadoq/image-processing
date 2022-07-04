@@ -106,15 +106,15 @@ def inter_bicubic(img, indices):
 
 
 # lagrange expansion
-def expansion(img, pointF, pointD, n):
+def expansion(img, point, pointD, n):
     a = (-pointD[0] * (pointD[0]-1) * (pointD[0]-2) *
-         img[int(pointF[1]-1), int(pointF[0]+n-2)]) / 6
+         img[int(point[1]-1), int(point[0]+n-2)]) / 6
     b = ((pointD[0]+1) * (pointD[0]-1) * (pointD[0]-2)
-         * img[int(pointF[1]), int(pointF[0]+n-2)]) / 2
+         * img[int(point[1]), int(point[0]+n-2)]) / 2
     c = (-pointD[0] * (pointD[0]+1) * (pointD[0]-2) *
-         img[int(pointF[1]+1), int(pointF[0]+n-2)]) / 2
+         img[int(point[1]+1), int(point[0]+n-2)]) / 2
     d = (pointD[0] * (pointD[0]+1) * (pointD[0]-1) *
-         img[int(pointF[1]+2), int(pointF[0]+n-2)]) / 6
+         img[int(point[1]+2), int(point[0]+n-2)]) / 6
 
     return a + b + c + d
 
@@ -137,13 +137,13 @@ def inter_lagrange(img, indices):
         pointD = point - pointF
 
         a = (-pointD[1] * (pointD[1]-1) * (pointD[1]-2)
-             * expansion(img, pointF, pointD, 1)) / 6
+             * expansion(img, point, pointD, 1)) / 6
         b = ((pointD[1]+1) * (pointD[1]-1) * (pointD[1]-2)
-             * expansion(img, pointF, pointD, 2)) / 2
+             * expansion(img, point, pointD, 2)) / 2
         c = (-pointD[1] * (pointD[1]+1) * (pointD[1]-2)
-             * expansion(img, pointF, pointD, 3)) / 2
+             * expansion(img, point, pointD, 3)) / 2
         d = (pointD[1] * (pointD[1]+1) * (pointD[1]-1)
-             * expansion(img, pointF, pointD, 4)) / 6
+             * expansion(img, point, pointD, 4)) / 6
 
         newValues[i] = a + b + c + d
 
