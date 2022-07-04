@@ -177,7 +177,7 @@ def apply_transform(img, M, dsize, inter):
     else:
         return np.zeros(dsize)
 
-    return out.reshape(dsize, )
+    return out.reshape(dsize)
 
 
 def get_dim(dim, shape):

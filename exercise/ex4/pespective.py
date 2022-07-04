@@ -93,11 +93,17 @@ def main():
     input_path = './images/baboon_perspectiva.png'
     output_path = './images/baboon_perspectiva_output.png'
 
+    direct_path = './images/baboon_perspectiva_direct.png'
+    inverse_path = './images/baboon_perspectiva_inverse.png'
+
     input_image = cv.imread(input_path, cv.IMREAD_GRAYSCALE)
 
     M = get_perspective_transform(pt1, pt2)
-    image_normal = warp_perspective_normal(input_image, M, (512, 512))
+    image_direct = warp_perspective_normal(input_image, M, (512, 512))
     image_inverse = warp_perspective_inverse(input_image, M, (512, 512))
+
+    cv.imwrite(direct_path, image_direct)
+    cv.imwrite(inverse_path, image_inverse)
 
     plt.figure(figsize=(25, 20))
     rows, cols = 1, 3
@@ -108,7 +114,7 @@ def main():
     plt.title("Input Image")
 
     plt.subplot(rows, cols, 2)
-    plt.imshow(image_normal, cmap='gray')
+    plt.imshow(image_direct, cmap='gray')
     plt.title("$P'=TP$")
 
     plt.subplot(rows, cols, 3)
