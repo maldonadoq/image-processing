@@ -281,7 +281,7 @@ def main():
     output_path = args.output
 
     cv.imwrite(output_path, output_image)
-    print('transformation: {} {}, interpolation: {}, time: {} s.'.format(
+    print('transformation: {} {}, interpolation: {}, time: {:.4} s.'.format(
         transformation, values, args.method, end - start))
 
 
