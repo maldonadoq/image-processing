@@ -1,3 +1,5 @@
+from matplotlib import pyplot as plt
+
 import numpy as np
 import cv2 as cv
 
@@ -34,7 +36,33 @@ def get_perspective_transform(pointsA, pointsB):
     return x.reshape((3, 3))
 
 
-def warp_perspective(img, M, dsize):
+# P' = T * P
+def warp_perspective_normal(img, M, dsize):
+    # output image
+    dst = np.zeros(dsize)
+
+    # [i, j, 1] indices vectors to apply transform
+    iY, iX = np.indices(dimensions=img.shape)
+    indexInput = np.stack(
+        (iX.ravel(), iY.ravel(), np.ones(iY.size))).astype(int)
+
+    # dot product
+    indexOutput = M.dot(indexInput)
+    indexOutput = (indexOutput / indexOutput[2, :]).astype(int)
+
+    # valid [i,j] to output iaage
+    indexOutput = indexOutput.transpose()
+    index = np.where((indexOutput[:, 0] < 0) | (indexOutput[:, 0] >= dsize[0]) | (
+        indexOutput[:, 1] < 0) | (indexOutput[:, 1] >= dsize[1]))
+
+    indexOutput[index] = 0
+    dst[indexOutput[:, 1], indexOutput[:, 0]] = img.ravel()
+
+    return dst
+
+
+# P = TI * P'
+def warp_perspective_inverse(img, M, dsize):
     # indices [i, j, 1]
     iY, iX = np.indices(dimensions=dsize)
     indexOutput = np.stack(
@@ -63,16 +91,31 @@ def main():
     pt2 = np.array([[0, 0], [511, 0], [511, 511], [0, 511]])
 
     input_path = './images/baboon_perspectiva.png'
+    output_path = './images/baboon_perspectiva_output.png'
+
     input_image = cv.imread(input_path, cv.IMREAD_GRAYSCALE)
 
     M = get_perspective_transform(pt1, pt2)
-    output_image = warp_perspective(input_image, M, (512, 512))
+    image_normal = warp_perspective_normal(input_image, M, (512, 512))
+    image_inverse = warp_perspective_inverse(input_image, M, (512, 512))
 
-    cv.imshow("Original", input_image)
-    cv.imshow("Perspective", output_image.astype('uint8'))
+    plt.figure(figsize=(25, 20))
+    rows, cols = 1, 3
 
-    cv.waitKey(0)
-    cv.destroyAllWindows()
+    # showing image
+    plt.subplot(rows, cols, 1)
+    plt.imshow(input_image, cmap='gray')
+    plt.title("Input Image")
+
+    plt.subplot(rows, cols, 2)
+    plt.imshow(image_normal, cmap='gray')
+    plt.title("$P'=TP$")
+
+    plt.subplot(rows, cols, 3)
+    plt.imshow(image_inverse, cmap='gray')
+    plt.title("$P=T^{-1}P'$")
+
+    plt.savefig(output_path, bbox_inches='tight')
 
 
 if __name__ == "__main__":

@@ -149,6 +149,7 @@ dmypy.json
 *_bilinear.*
 *_bicubic.*
 *_lagrange.*
+*_output.*
 
 # Cpp
 *.out
