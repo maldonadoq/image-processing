@@ -191,8 +191,11 @@ def get_dim(dim, shape):
 def get_values(value):
     values = value.split(',')
     if len(values) == 2:
-        return (float(values[0]), float(values[1]))
-    raise TypeError('len(value) != 2')
+        try:
+            return (float(values[0]), float(values[1]))
+        except ValueError:
+            raise
+    raise TypeError('{} is not a tuple of 2 elements (x,y)'.format(value))
 
 
 def main():
