@@ -1,6 +1,7 @@
 import numpy as np
 import cv2 as cv
 import argparse
+import time
 
 
 # nearest neighbor interpolation
@@ -10,10 +11,9 @@ def inter_nearest(img, indices):
 
     # set zero value
     indices = indices.transpose()
-    index = np.where((indices[:, 0] < 0) | (indices[:, 0] >= img.shape[0]) |
-                     (indices[:, 1] < 0) | (indices[:, 1] >= img.shape[1]))
+    index = np.where((indices[:, 0] < 0) | (indices[:, 0] >= img.shape[1]) |
+                     (indices[:, 1] < 0) | (indices[:, 1] >= img.shape[0]))
     indices[index] = 0
-
     return img[indices[:, 1], indices[:, 0]]
 
 
@@ -58,8 +58,8 @@ def u(s, a=-0.5):
 def inter_bicubic(img, indices):
     # filter valid indices
     indices = indices.transpose()
-    index = np.where((indices[:, 0] >= 1) & (indices[:, 0] < img.shape[0]-2) &
-                     (indices[:, 1] >= 1) & (indices[:, 1] < img.shape[1]-2))
+    index = np.where((indices[:, 0] >= 1) & (indices[:, 0] < img.shape[1]-2) &
+                     (indices[:, 1] >= 1) & (indices[:, 1] < img.shape[0]-2))
 
     # new indices with valid indices
     newIndices = indices[index]
@@ -123,8 +123,8 @@ def expansion(img, pointF, pointD, n):
 def inter_lagrange(img, indices):
     # filter valid indices
     indices = indices.transpose()
-    index = np.where((indices[:, 0] >= 1) & (indices[:, 0] < img.shape[0]-2) &
-                     (indices[:, 1] >= 1) & (indices[:, 1] < img.shape[1]-2))
+    index = np.where((indices[:, 0] >= 1) & (indices[:, 0] < img.shape[1]-2) &
+                     (indices[:, 1] >= 1) & (indices[:, 1] < img.shape[0]-2))
 
     # new indices with valid indices
     newIndices = indices[index]
@@ -154,7 +154,7 @@ def inter_lagrange(img, indices):
 
 
 # apply transform
-def apply_transform(img, M, dsize, inter):
+def transform(img, M, dsize, inter):
     # indices [i, j, 1]
     iY, iX = np.indices(dimensions=dsize)
     indexOutput = np.stack(
@@ -188,31 +188,25 @@ def get_dim(dim, shape):
     return shape
 
 
-def rotate(img, angle, dimension, inter='nearest'):
-    angle = -np.deg2rad(angle)
-    M = np.array([
-        [np.cos(angle), -np.sin(angle), 0],
-        [np.sin(angle), np.cos(angle), 0],
-        [0, 0, 1]
-    ])
-    return apply_transform(img, M, dimension, inter)
-
-
-def resize(img, scale, dimension, inter='nearest'):
-    M = np.array([
-        [scale, 0, 0],
-        [0, scale, 0],
-        [0, 0, 1]
-    ])
-    return apply_transform(img, M, dimension, inter)
+def get_values(value):
+    values = value.split(',')
+    if len(values) == 2:
+        return (float(values[0]), float(values[1]))
+    raise TypeError('len(value) != 2')
 
 
 def main():
     parser = argparse.ArgumentParser(description='Interpolation techniques.')
     parser.add_argument(
-        '-a', '--angle', dest='angle', type=float,  help='Rotation angle measured in degrees counterclockwise')
+        '-a', '--angle', dest='angle', type=float,  help='Rotation angle (degrees)')
     parser.add_argument(
-        '-s', '--scale', dest='scale', type=float, help='Scale factor')
+        '-s', '--scale', dest='scale', type=str, help='Scale factor')
+    parser.add_argument(
+        '-t', '--translation', dest='translation', type=str, help='Translation values')
+    parser.add_argument(
+        '-r', '--reflection', dest='reflection', type=str, help='Reflection axis (1,-1)')
+    parser.add_argument(
+        '-k', '--', dest='shear', type=str, help='Shear values')
     parser.add_argument(
         '-d', '--dimension', dest='dim', type=str, help='Output image dimension in pixels: (N,M)')
     parser.add_argument(
@@ -229,17 +223,67 @@ def main():
 
     dimension = get_dim(args.dim, input_image.shape)
     output_image = np.zeros(dimension, dtype='uint8')
-    if args.angle:
-        output_image = rotate(input_image, args.angle, dimension, args.method)
-    elif args.scale:
-        output_image = resize(input_image, args.scale, dimension, args.method)
 
+    transformation = 'scale'
+    T = np.array([
+        [1, 0, 0],
+        [0, 1, 0],
+        [0, 0, 1]
+    ])
+
+    if args.angle:
+        transformation = 'rotation'
+        values = [-np.deg2rad(args.angle)]
+        T = np.array([
+            [np.cos(values[0]), -np.sin(values[0]), 0],
+            [np.sin(values[0]), np.cos(values[0]), 0],
+            [0, 0, 1]
+        ])
+    elif args.scale:
+        transformation = 'scale'
+        values = get_values(args.scale)
+        T = np.array([
+            [values[0], 0, 0],
+            [0, values[1], 0],
+            [0, 0, 1]
+        ])
+    elif args.translation:
+        transformation = 'translation'
+        values = get_values(args.translation)
+        T = np.array([
+            [1, 0, values[0]],
+            [0, 1, values[1]],
+            [0, 0, 1]
+        ])
+    elif args.reflection:
+        transformation = 'reflection'
+        values = get_values(args.reflection)
+        T = np.array([
+            [values[0], 0, 0],
+            [0, values[1], 0],
+            [0, 0, 1]
+        ])
+    elif args.shear:
+        transformation = 'shear'
+        values = get_values(args.shear)
+        T = np.array([
+            [1, values[0], 0],
+            [values[1], 1, 0],
+            [0, 0, 1]
+        ])
+
+    start = time.time()
+    output_image = transform(input_image, T, dimension, args.method)
+    end = time.time()
     output_path = args.output
+
     cv.imwrite(output_path, output_image)
+    print('transformation: {} {}, interpolation: {}, time: {} s.'.format(
+        transformation, values, args.method, end - start))
 
 
 if __name__ == "__main__":
     main()
 
 # Example to tun program
-# python3 interpolation.py -i ./images/baboon.png -o ./images/baboon_nearest.png -s 2 -d 1024,1024
+# python3 interpolation.py -i ./images/baboon.png -o ./images/baboon_bilinear.png -s=0.75,0.75 -m bilinear
