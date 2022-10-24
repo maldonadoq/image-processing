@@ -1,2 +1,9 @@
-# pid
-Processamento de Imagem Digital
+# Digital image processing
+Digital image processing
+
+- Vectorized
+- Steganography
+- Halftones
+- Video Summarization
+- Geometric Transformations
+- Interpolation
